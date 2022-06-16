@@ -6,7 +6,8 @@ This is a good project to use as a starting point for your AssemblyScript projec
 
 This repository includes a complete project structure for AssemblyScript contracts targeting the NEAR platform.
 
-The example here is very basic.  It's a simple contract demonstrating the following concepts:
+The example here is very basic. It's a simple contract demonstrating the following concepts:
+
 - a single contract
 - the difference between `view` vs. `change` methods
 - basic contract storage
@@ -40,12 +41,11 @@ private storageReport(): string {}
 
 We say that an AssemblyScript contract is written in the "singleton style" when the `index.ts` file (the contract entry point) has a single exported class (the name of the class doesn't matter) that is decorated with `@nearBindgen`.
 
-In this case, all methods on the class become public contract methods unless marked `private`.  Also, all instance variables are stored as a serialized instance of the class under a special storage key named `STATE`.  AssemblyScript uses JSON for storage serialization (as opposed to Rust contracts which use a custom binary serialization format called borsh).
+In this case, all methods on the class become public contract methods unless marked `private`. Also, all instance variables are stored as a serialized instance of the class under a special storage key named `STATE`. AssemblyScript uses JSON for storage serialization (as opposed to Rust contracts which use a custom binary serialization format called borsh).
 
 ```ts
 @nearBindgen
 export class Contract {
-
   // return the string 'hello world'
   helloWorld(): string {}
 
@@ -61,7 +61,6 @@ export class Contract {
 }
 ```
 
-
 ## Usage
 
 ### Getting started
@@ -71,11 +70,11 @@ export class Contract {
 INSTALL `NEAR CLI` first like this: `npm i -g near-cli`
 
 1. clone this repo to a local folder
-2. run `yarn`
+2. run `npm ci`
 3. run `./scripts/1.dev-deploy.sh`
-3. run `./scripts/2.use-contract.sh`
-4. run `./scripts/2.use-contract.sh` (yes, run it to see changes)
-5. run `./scripts/3.cleanup.sh`
+4. run `./scripts/2.use-contract.sh`
+5. run `./scripts/2.use-contract.sh` (yes, run it to see changes)
+6. run `./scripts/3.cleanup.sh`
 
 ### Videos
 
@@ -87,13 +86,13 @@ This video shows the build and deployment of the contract.
 
 **`2.use-contract.sh`**
 
-This video shows contract methods being called.  You should run the script twice to see the effect it has on contract state.
+This video shows contract methods being called. You should run the script twice to see the effect it has on contract state.
 
 [![asciicast](https://asciinema.org/a/409577.svg)](https://asciinema.org/a/409577)
 
 **`3.cleanup.sh`**
 
-This video shows the cleanup script running.  Make sure you add the `BENEFICIARY` environment variable. The script will remind you if you forget.
+This video shows the cleanup script running. Make sure you add the `BENEFICIARY` environment variable. The script will remind you if you forget.
 
 ```sh
 export BENEFICIARY=<your-account-here>   # this account receives contract account balance
@@ -155,7 +154,7 @@ export BENEFICIARY=<your-account-here>   # this account receives contract accoun
 │   │       └── index.ts               # contract code for contract 2
 │   ├── tsconfig.json                  # Typescript configuration
 │   └── utils.ts                       # common contract utility functions
-└── yarn.lock                          # project manifest version lock
+└── package-lock.json                  # project manifest version lock
 ```
 
 You may clone this repo to get started OR create everything from scratch.

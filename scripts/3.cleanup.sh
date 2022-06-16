@@ -27,6 +27,6 @@ echo ---------------------------------------------------------
 echo "Step 2: Clean up project folders"
 echo ---------------------------------------------------------
 echo
-yarn clean
+npm run clean
 
 exit 0

@@ -9,7 +9,7 @@ echo "Step 1: Build the contract (may take a few seconds)"
 echo ---------------------------------------------------------
 echo
 
-yarn build
+npm run build
 
 echo
 echo
