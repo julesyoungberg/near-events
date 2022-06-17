@@ -4,7 +4,7 @@
   "description": "Start with a basic project",
   "scripts": {
     "dev": "watch -d -n 1 'clear && npm run test'",
-    "test": "npx asp -f unit.spec",
+    "test": "npx asp -f .spec",
     "clean": "rm -rf ./build && rm -rf ./neardev",
     "build": "asb --target debug",
     "build:release": "asb",
