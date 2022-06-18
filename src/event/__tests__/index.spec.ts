@@ -1,14 +1,15 @@
-import { VMContext, u128, VM, context } from 'near-sdk-as';
+import { VMContext, u128 } from 'near-sdk-as';
 import * as contract from '../assembly'
-import { AccountId, MIN_ACCOUNT_BALANCE, ONE_NEAR, toYocto } from '../../utils';
+import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from '../../utils';
 import { EventDetails } from '../assembly/models';
 
 // config
-const DATE = (Date.now() + 30 * 24 * 3600000) * 1000000;
+const ONE_MONTH = 30 * 24 * 3600 * 1000 * 1000000; // nanoseconds
+const NOW = Date.now() * 1000000; // nanoseconds
+const DATE = NOW + ONE_MONTH;
 const LOCATION = "space";
 const TITLE = "space party";
 const DESCRIPTION = 'come dance and chat with friends';
-const CONTRACT = 'event';
 const HOST = 'alice';
 const COHOST = 'bob';
 const GUEST = 'carol';
@@ -28,6 +29,10 @@ const attachMinBalance = (): void => {
     attachDeposit(MIN_ACCOUNT_BALANCE);
 };
 
+const setBlockTimestamp = (timestamp: u64): void => {
+    VMContext.setBlock_timestamp(timestamp);
+}
+
 const newEventDetails = (): EventDetails => new EventDetails(
     DATE,
     LOCATION,
@@ -39,6 +44,7 @@ const newEventDetails = (): EventDetails => new EventDetails(
 const doInitialize = (): void => {
     setCurrentAccount(HOST);
     attachMinBalance();
+    setBlockTimestamp(NOW);
     contract.initialize(newEventDetails());
 };
 
@@ -52,6 +58,12 @@ const addCohost = (): void => {
 
 const addGuest = (): void => {
     contract.add_guest(GUEST);
+};
+
+const buyTicket = (): void => {
+    setCurrentAccount(ATTENDEE);
+    contract.buy_ticket();
+    setCurrentAccount(HOST);
 };
 
 // tests
@@ -92,22 +104,22 @@ describe("initialization", () => {
             beforeEach(() => {
                 setCurrentAccount(HOST);
                 attachMinBalance();
+                setBlockTimestamp(NOW);
             });
 
-            // @todo fix event time
-            // it("requires an upcoming time", () => {
-            //     expect(() => {
-            //         contract.initialize(
-            //             new EventDetails(
-            //                 (Date.now() - 30 * 24 * 3600000) * 1000000,
-            //                 LOCATION,
-            //                 TITLE,
-            //                 DESCRIPTION,
-            //                 ""
-            //             )
-            //         );
-            //     }).toThrow();
-            // });
+            it("requires an upcoming time", () => {
+                expect(() => {
+                    contract.initialize(
+                        new EventDetails(
+                            NOW - ONE_MONTH,
+                            LOCATION,
+                            TITLE,
+                            DESCRIPTION,
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
 
             it("requires a location", () => {
                 expect(() => {
@@ -575,6 +587,13 @@ describe("initialized", () => {
                 }).not.toThrow();
             });
         });
+
+        it("throws after the event has passed", () => {
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.add_cohost(COHOST);
+            }).toThrow();
+        });
     });
 
     describe("add_guest()", () => {
@@ -612,6 +631,13 @@ describe("initialized", () => {
                     contract.add_guest(ATTENDEE);
                 }).not.toThrow();
             });
+        });
+
+        it("throws after the event has passed", () => {
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.add_guest(GUEST);
+            }).toThrow();
         });
     });
 
@@ -658,6 +684,14 @@ describe("initialized", () => {
                     contract.remove_cohost(COHOST);
                 }).not.toThrow();
             });
+        });
+
+        it("throws after the event has passed", () => {
+            addCohost();
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.remove_cohost(COHOST);
+            }).toThrow();
         });
     });
 
@@ -706,6 +740,14 @@ describe("initialized", () => {
                 }).not.toThrow();
             });
         });
+
+        it("throws after the event has passed", () => {
+            addGuest();
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.remove_guest(GUEST);
+            }).toThrow();
+        });
     });
 
     describe("set_details()", () => {
@@ -734,20 +776,19 @@ describe("initialized", () => {
         });
 
         describe("detail validation", () => {
-            // @todo fix event time
-            // it("requires an upcoming time", () => {
-            //     expect(() => {
-            //         contract.initialize(
-            //             new EventDetails(
-            //                 (Date.now() - 30 * 24 * 3600000) * 1000000,
-            //                 LOCATION,
-            //                 TITLE,
-            //                 DESCRIPTION,
-            //                 ""
-            //             )
-            //         );
-            //     }).toThrow();
-            // });
+            it("requires an upcoming time", () => {
+                expect(() => {
+                    contract.initialize(
+                        new EventDetails(
+                            NOW - ONE_MONTH,
+                            LOCATION,
+                            TITLE,
+                            DESCRIPTION,
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
 
             it("requires a location", () => {
                 expect(() => {
@@ -826,6 +867,13 @@ describe("initialized", () => {
                     contract.set_details(newEventDetails());
                 }).not.toThrow();
             });
+        });
+
+        it("throws after the event has passed", () => {
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.set_details(newEventDetails());
+            }).toThrow();
         });
     });
 
@@ -1010,6 +1058,13 @@ describe("initialized", () => {
                 }).toThrow();
             });
         });
+
+        it("throws after the event has passed", () => {
+            setBlockTimestamp(DATE + ONE_MONTH);
+            expect(() => {
+                contract.go_public();
+            }).toThrow();
+        });
     });
 
     describe("buy_ticket()", () => {
@@ -1084,6 +1139,14 @@ describe("initialized", () => {
                     contract.buy_ticket();
                 }).toThrow();
             });
+        });
+
+        it("throws after the event has passed", () => {
+            setBlockTimestamp(DATE + ONE_MONTH);
+            setCurrentAccount(ATTENDEE);
+            expect(() => {
+                contract.buy_ticket();
+            }).toThrow();
         });
     });
 
@@ -1191,6 +1254,78 @@ describe("initialized", () => {
                 setCurrentAccount(HOST);
                 expect(contract.get_tickets_sold()).toBe(2);
             });
+        });
+    });
+
+    describe("pay_hosts()", () => {
+        describe("pays the hosts after the event", () => {
+            beforeEach(() => {
+                contract.add_cohost(COHOST);
+                contract.set_ticket_price(ONE_NEAR);
+                contract.go_public();
+            });
+
+            it("throws if the event is upcoming", () => {
+                buyTicket();
+                expect(() => {
+                    contract.pay_hosts();
+                }).toThrow();
+            });
+
+            it("throws if no tickets were bought", () => {
+                setBlockTimestamp(DATE + ONE_MONTH);
+                expect(() => {
+                    contract.pay_hosts();
+                }).toThrow();
+            });
+
+            it("throws if called twice", () => {
+                buyTicket();
+                setBlockTimestamp(DATE + ONE_MONTH);
+                contract.pay_hosts();
+                expect(() => {
+                    contract.pay_hosts();
+                }).toThrow();
+            });
+        });
+
+        describe("host only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+                buyTicket();
+                setBlockTimestamp(DATE + ONE_MONTH);
+            });
+
+            // @todo fix these tests
+            // it("throws for an attendee", () => {
+            //     setCurrentAccount(ATTENDEE);
+            //     expect(() => {
+            //         contract.pay_hosts();
+            //     }).toThrow();
+            // });
+
+            // it("throws for a guest", () => {
+            //     setCurrentAccount(GUEST);
+            //     expect(() => {
+            //         contract.pay_hosts();
+            //     }).toThrow();
+            // });
+
+            // it("throws for an cohost", () => {
+            //     setCurrentAccount(COHOST);
+            //     expect(() => {
+            //         contract.pay_hosts();
+            //     }).toThrow();
+            // });
+
+            // it("does not throw for a host", () => {
+            //     setCurrentAccount(HOST);
+            //     expect(() => {
+            //         contract.pay_hosts();
+            //     }).not.toThrow();
+            // });
         });
     });
 });

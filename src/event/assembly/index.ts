@@ -155,6 +155,13 @@ export function buy_ticket(): void {
 }
 
 /**
+ * Distributes the ticket revenue to the hosts.
+ */
+export function pay_hosts(): void {
+    get_event().pay_hosts();
+}
+
+/**
  * =================================
  * Private Methods
  * =================================

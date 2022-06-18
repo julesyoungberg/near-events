@@ -1,4 +1,4 @@
-import { context, PersistentSet, storage, u128 } from "near-sdk-as";
+import { context, ContractPromiseBatch, PersistentSet, storage, u128 } from "near-sdk-as";
 import { AccountId, Timestamp } from '../../utils';
 
 /**
@@ -43,9 +43,10 @@ export class Event {
     private tickets: PersistentSet<Ticket> = new PersistentSet<Ticket>("tx");
     private guests: PersistentSet<string> = new PersistentSet<string>("gl");
     private max_tickets: i32 = 0;
-    private ticket_price: u128;
+    private ticket_price: u128 = new u128(0);
+    private ticket_revenue: u128 = new u128(0);
+    private paid_out: bool = false;
     public public: bool = false;
-    public date: Timestamp;
     public details: EventDetails;
 
     constructor(public host: AccountId, details: EventDetails) {
@@ -180,6 +181,14 @@ export class Event {
         this.save();
     }
 
+    /**
+     * Creates a new ticket owned by the sender, provided
+     *  - the event is public and upcoming
+     *  - they are not a guest or host
+     *  - they have not already bought a ticket
+     *  - the tickets have not sold out
+     *  - the attendee has deposited the ticket cost
+     */
     buy_ticket(): void {
         this.assert_upcoming();
         this.assert_public();
@@ -191,8 +200,34 @@ export class Event {
         }
 
         this.assert_paid();
+        this.ticket_revenue = u128.add(this.ticket_revenue, context.attachedDeposit);
+
         this.tickets.add(new Ticket(context.sender));
         this.save();
+    }
+
+    /**
+     * Distributes revenue from ticket sales evenly among the host and cohosts after the event.
+     */
+    pay_hosts(): void {
+        this.assert_host();
+        assert(this.details.date < context.blockTimestamp, "The event must have passed to pay the hosts");
+        assert(this.ticket_revenue.toU32() > 0, "This event had no ticket revenue");
+        assert(!this.paid_out, "The hosts have already been paid");
+
+        const num_hosts = this.cohosts.size + 1;
+        const pay_amount = u128.div(this.ticket_revenue, new u128(num_hosts));
+
+        const to_host = ContractPromiseBatch.create(this.host);
+        to_host.transfer(pay_amount);
+
+        const cohosts = this.cohosts.values();
+        for (let i: i32 = 0; i < cohosts.length; i++) {
+            const to_cohost = ContractPromiseBatch.create(cohosts[i]);
+            to_cohost.transfer(pay_amount);
+        }
+
+        this.paid_out = false;
     }
 
     // private methods
