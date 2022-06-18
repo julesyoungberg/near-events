@@ -92,13 +92,13 @@ export class Event {
     has_ticket(attendee: AccountId): boolean {
         this.assert_public();
 
-        if (this.is_guest()) {
+        if (this.is_guest(attendee)) {
             return true;
         }
 
         const tickets = this.tickets.values();
         for (let i: i32 = 0; i < tickets.length; i++) {
-            if (attendee === tickets[i].owner) {
+            if (attendee == tickets[i].owner) {
                 return true;
             }
         }
@@ -134,7 +134,7 @@ export class Event {
     }
 
     remove_guest(guest: AccountId): void {
-        this.assert_host();
+        this.assert_cohost();
         this.assert_upcoming();
         this.guests.delete(guest);
         this.save();
@@ -142,7 +142,7 @@ export class Event {
 
     set_details(details: EventDetails): void {
         this.assert_cohost();
-        this.assert_private();
+        this.assert_upcoming();
         details.assert_valid();
         this.details = details;
         this.save();
@@ -175,7 +175,11 @@ export class Event {
         this.assert_public();
         this.assert_not_guest();
         assert(!this.has_ticket(context.sender), "You already have a ticket");
-        assert(this.tickets.size <= this.max_tickets, "This event is sold out");
+
+        if (this.max_tickets > 0) {
+            assert(this.tickets.size <= this.max_tickets, "This event is sold out");
+        }
+
         this.assert_paid();
         this.tickets.add(new Ticket(context.sender));
         this.save();
@@ -184,21 +188,20 @@ export class Event {
     // private methods
 
     private assert_host(): void {
-        assert(context.sender === this.host, "Only the host can perform this action");
+        assert(context.sender == this.host, "Only the host can perform this action");
     }
 
     private assert_cohost(): void {
         const sender = context.sender;
-        assert(sender === this.host || this.cohosts.has(sender), "Only one of the hosts can perform this action");
+        assert(sender == this.host || this.cohosts.has(sender), "Only one of the hosts can perform this action");
     }
 
-    private is_guest(): bool {
-        const sender = context.sender;
-        return sender === this.host || this.cohosts.has(sender) || this.guests.has(sender);
+    private is_guest(account: AccountId): bool {
+        return account == this.host || this.cohosts.has(account) || this.guests.has(account);
     }
 
     private assert_not_guest(): void {
-        assert(!this.is_guest(), "Only someone not attending can perform this action");
+        assert(!this.is_guest(context.sender), "Only someone not attending can perform this action");
     }
 
     private assert_private(): void {
