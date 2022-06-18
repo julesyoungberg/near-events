@@ -89,9 +89,17 @@ export class Event {
         return this.ticket_price;
     }
 
-    has_ticket(attendee: AccountId): boolean {
-        this.assert_public();
+    get_max_tickets(): i32 {
+        this.assert_public_or_cohost();
+        return this.max_tickets;
+    }
 
+    get_tickets_sold(): i32 {
+        this.assert_cohost();
+        return this.tickets.size;
+    }
+
+    has_ticket(attendee: AccountId): boolean {
         if (this.is_guest(attendee)) {
             return true;
         }
@@ -179,7 +187,7 @@ export class Event {
         assert(!this.has_ticket(context.sender), "You already have a ticket");
 
         if (this.max_tickets > 0) {
-            assert(this.tickets.size <= this.max_tickets, "This event is sold out");
+            assert(this.tickets.size < this.max_tickets, "This event is sold out");
         }
 
         this.assert_paid();

@@ -1,4 +1,4 @@
-import { VMContext, u128, VM } from 'near-sdk-as';
+import { VMContext, u128, VM, context } from 'near-sdk-as';
 import * as contract from '../assembly'
 import { AccountId, MIN_ACCOUNT_BALANCE, ONE_NEAR, toYocto } from '../../utils';
 import { EventDetails } from '../assembly/models';
@@ -358,11 +358,6 @@ describe("initialized", () => {
     });
 
     describe("get_ticket_price()", () => {
-        it("defaults to 0", () => {
-            setCurrentAccount(HOST);
-            expect(contract.get_ticket_price()).toBe(new u128(0));
-        });
-
         describe("must be at least cohost if private", () => {
             beforeEach(() => {
                 addCohost();
@@ -421,6 +416,103 @@ describe("initialized", () => {
         });
     });
 
+    describe("get_max_tickets()", () => {
+        describe("must be at least cohost if private", () => {
+            beforeEach(() => {
+                addCohost();
+                addGuest();
+            });
+
+            describe("when private", () => {
+                it("throws for an attendee", () => {
+                    setCurrentAccount(ATTENDEE);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).toThrow();
+                });
+
+                it("throws for a guest", () => {
+                    setCurrentAccount(GUEST);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).toThrow();
+                });
+
+                it("does not throw for a cohost", () => {
+                    setCurrentAccount(COHOST);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).not.toThrow();
+                });
+
+                it("does not throw for a host", () => {
+                    setCurrentAccount(HOST);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).not.toThrow();
+                });
+            });
+
+            describe("when public", () => {
+                beforeEach(() => {
+                    contract.go_public();
+                });
+
+                it("does not throw for a guest", () => {
+                    setCurrentAccount(GUEST);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).not.toThrow();
+                });
+
+                it("does not throw for an attendee", () => {
+                    setCurrentAccount(ATTENDEE);
+                    expect(() => {
+                        contract.get_max_tickets();
+                    }).not.toThrow();
+                });
+            });
+        });
+    });
+
+    describe("get_tickets_sold()", () => {
+        describe("cohosts and host only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+            });
+
+            it("throws for an attendee", () => {
+                setCurrentAccount(ATTENDEE);
+                expect(() => {
+                    contract.get_tickets_sold();
+                }).toThrow();
+            });
+
+            it("throws for a guest", () => {
+                setCurrentAccount(GUEST);
+                expect(() => {
+                    contract.get_tickets_sold();
+                }).toThrow();
+            });
+
+            it("does not throw for an cohost", () => {
+                setCurrentAccount(COHOST);
+                expect(() => {
+                    contract.get_tickets_sold();
+                }).not.toThrow();
+            });
+
+            it("does not throw for a host", () => {
+                setCurrentAccount(HOST);
+                expect(() => {
+                    contract.get_tickets_sold();
+                }).not.toThrow();
+            });
+        });
+    });
+
     describe("has_ticket()", () => {
         describe("returns true for guests and hosts", () => {
             beforeEach(() => {
@@ -443,56 +535,6 @@ describe("initialized", () => {
 
             it("returns true for a host", () => {
                 expect(contract.has_ticket(HOST)).toBe(true);
-            });
-        });
-
-        describe("event must be public", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                it("throws for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.has_ticket(ATTENDEE);
-                    }).toThrow();
-                });
-
-                it("throws for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.has_ticket(GUEST);
-                    }).toThrow();
-                });
-
-                it("throws for an cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.has_ticket(COHOST);
-                    }).toThrow();
-                });
-
-                it("throws for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.has_ticket(HOST);
-                    }).toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.has_ticket(GUEST);
-                    }).not.toThrow();
-                });
             });
         });
     });
@@ -1046,6 +1088,109 @@ describe("initialized", () => {
     });
 
     describe("tickets", () => {
-        // @todo
+        describe("free and unlimited by default", () => {
+            beforeEach(() => {
+                contract.go_public();
+            });
+
+            it("should be free by default", () => {
+                expect(contract.get_ticket_price()).toBe(new u128(0));
+            });
+
+            it("should be unlimited by default", () => {
+                expect(contract.get_max_tickets()).toBe(0);
+            });
+
+            it("should be purchasable", () => {
+                attachDeposit(new u128(0));
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(0);
+                
+                setCurrentAccount(ATTENDEE);
+                expect(contract.has_ticket(ATTENDEE)).toBe(false);
+                contract.buy_ticket();
+                expect(contract.has_ticket(ATTENDEE)).toBe(true);
+
+                setCurrentAccount(GUEST);
+                expect(contract.has_ticket(GUEST)).toBe(false);
+                contract.buy_ticket();
+                expect(contract.has_ticket(GUEST)).toBe(true);
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(2);
+            });
+        });
+
+        describe("max number and price are configurable", () => {
+            beforeEach(() => {
+                contract.set_ticket_price(ONE_NEAR);
+                contract.set_max_tickets(2);
+                contract.go_public();
+                setCurrentAccount(ATTENDEE);
+            });
+
+            it("should throw without the price", () => {
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(0);
+
+                setCurrentAccount(ATTENDEE);
+                attachDeposit(new u128(0));
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(0);
+            });
+
+            it("should succeed with the correct deposit", () => {
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(0);
+
+                setCurrentAccount(ATTENDEE);
+                expect(contract.has_ticket(ATTENDEE)).toBe(false);
+                contract.buy_ticket();
+                expect(contract.has_ticket(ATTENDEE)).toBe(true);
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(1);
+            });
+
+            it("should only allow one per person", () => {
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(0);
+
+                setCurrentAccount(ATTENDEE);
+                contract.buy_ticket();
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(1);
+            });
+
+            it("should throw when the tickets are sold out", () => {
+                expect(contract.has_ticket(ATTENDEE)).toBe(false);
+                contract.buy_ticket();
+                expect(contract.has_ticket(ATTENDEE)).toBe(true);
+
+                setCurrentAccount(GUEST);
+                expect(contract.has_ticket(GUEST)).toBe(false);
+                contract.buy_ticket();
+                expect(contract.has_ticket(GUEST)).toBe(true);
+
+                setCurrentAccount(COHOST);
+                expect(contract.has_ticket(COHOST)).toBe(false);
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+                expect(contract.has_ticket(COHOST)).toBe(false);
+
+                setCurrentAccount(HOST);
+                expect(contract.get_tickets_sold()).toBe(2);
+            });
+        });
     });
 });

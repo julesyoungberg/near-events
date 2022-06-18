@@ -61,10 +61,24 @@ export function get_details(): EventDetails {
 }
 
 /**
- * Fetches the ticket price in NEAR.
+ * Returns the ticket price in NEAR.
  */
 export function get_ticket_price(): u128 {
     return get_event().get_ticket_price();
+}
+
+/**
+ * Returns the maximum number of tickets for this event.
+ */
+export function get_max_tickets(): u32 {
+    return get_event().get_max_tickets();
+}
+
+/**
+ * Returns the number of tickets sold.
+ */
+export function get_tickets_sold(): u32 {
+    return get_event().get_tickets_sold();
 }
 
 /**
