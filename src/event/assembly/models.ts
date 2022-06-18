@@ -1,5 +1,11 @@
-import { context, ContractPromiseBatch, PersistentSet, storage, u128 } from "near-sdk-as";
-import { AccountId, Timestamp } from '../../utils';
+import {
+    context,
+    ContractPromiseBatch,
+    PersistentSet,
+    storage,
+    u128,
+} from "near-sdk-as";
+import { AccountId, Timestamp } from "../../utils";
 
 /**
  * This class contains details about an event including date, location, and a description.
@@ -11,7 +17,7 @@ export class EventDetails {
         public location: string,
         public title: string,
         public description: string,
-        public image_url: string,
+        public image_url: string
     ) {}
 
     assert_valid(): void {
@@ -22,24 +28,26 @@ export class EventDetails {
     }
 }
 
- /**
-  * The Ticket class represents a ticket to the event and has one owner;
-  * 
-  * @todo: implement ticket resale.
-  */
+/**
+ * The Ticket class represents a ticket to the event and has one owner;
+ *
+ * @todo: implement ticket resale.
+ */
 @nearBindgen
 export class Ticket {
     constructor(public owner: AccountId) {}
 }
 
-export const EVENT_KEY = 'ev';
+export const EVENT_KEY = "ev";
 
 /**
  * The Event class contains the main business logic of the contract.
  */
 @nearBindgen
 export class Event {
-    private cohosts: PersistentSet<AccountId> = new PersistentSet<AccountId>("ch");
+    private cohosts: PersistentSet<AccountId> = new PersistentSet<AccountId>(
+        "ch"
+    );
     private tickets: PersistentSet<Ticket> = new PersistentSet<Ticket>("tx");
     private guests: PersistentSet<string> = new PersistentSet<string>("gl");
     private max_tickets: i32 = 0;
@@ -129,7 +137,7 @@ export class Event {
     add_cohost(cohost: AccountId): void {
         this.assert_host();
         this.assert_upcoming();
-        this.cohosts.add(cohost)
+        this.cohosts.add(cohost);
         this.save();
     }
 
@@ -199,11 +207,17 @@ export class Event {
         assert(!this.has_ticket(context.sender), "You already have a ticket");
 
         if (this.max_tickets > 0) {
-            assert(this.tickets.size < this.max_tickets, "This event is sold out");
+            assert(
+                this.tickets.size < this.max_tickets,
+                "This event is sold out"
+            );
         }
 
         this.assert_paid();
-        this.ticket_revenue = u128.add(this.ticket_revenue, context.attachedDeposit);
+        this.ticket_revenue = u128.add(
+            this.ticket_revenue,
+            context.attachedDeposit
+        );
 
         this.tickets.add(new Ticket(context.sender));
         this.save();
@@ -214,8 +228,14 @@ export class Event {
      */
     pay_hosts(): void {
         this.assert_host();
-        assert(this.details.date < context.blockTimestamp, "The event must have passed to pay the hosts");
-        assert(this.ticket_revenue.toU32() > 0, "This event had no ticket revenue");
+        assert(
+            this.details.date < context.blockTimestamp,
+            "The event must have passed to pay the hosts"
+        );
+        assert(
+            this.ticket_revenue.toU32() > 0,
+            "This event had no ticket revenue"
+        );
         assert(!this.paid_out, "The hosts have already been paid");
 
         const num_hosts = this.cohosts.size + 1;
@@ -236,24 +256,40 @@ export class Event {
     // private methods
 
     private assert_host(): void {
-        assert(context.sender == this.host, "Only the host can perform this action");
+        assert(
+            context.sender == this.host,
+            "Only the host can perform this action"
+        );
     }
 
     private assert_cohost(): void {
         const sender = context.sender;
-        assert(sender == this.host || this.cohosts.has(sender), "Only one of the hosts can perform this action");
+        assert(
+            sender == this.host || this.cohosts.has(sender),
+            "Only one of the hosts can perform this action"
+        );
     }
 
     private is_guest(account: AccountId): bool {
-        return account == this.host || this.cohosts.has(account) || this.guests.has(account);
+        return (
+            account == this.host ||
+            this.cohosts.has(account) ||
+            this.guests.has(account)
+        );
     }
 
     private assert_not_guest(): void {
-        assert(!this.is_guest(context.sender), "Only someone not attending can perform this action");
+        assert(
+            !this.is_guest(context.sender),
+            "Only someone not attending can perform this action"
+        );
     }
 
     private assert_private(): void {
-        assert(!this.public, "This action can only be done before the event goes public");
+        assert(
+            !this.public,
+            "This action can only be done before the event goes public"
+        );
     }
 
     private assert_public(): void {
@@ -261,11 +297,17 @@ export class Event {
     }
 
     private assert_upcoming(): void {
-        assert(context.blockTimestamp < this.details.date, "This action can only be done before the event date");
+        assert(
+            context.blockTimestamp < this.details.date,
+            "This action can only be done before the event date"
+        );
     }
 
     private assert_paid(): void {
-        assert(context.attachedDeposit >= this.ticket_price, "You must pay the ticket price");
+        assert(
+            context.attachedDeposit >= this.ticket_price,
+            "You must pay the ticket price"
+        );
     }
 
     private assert_public_or_cohost(): void {

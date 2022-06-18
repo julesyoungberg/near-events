@@ -1,8 +1,8 @@
 // @nearfile out
 import { context, storage, u128 } from "near-sdk-as";
-import { AccountId, MIN_ACCOUNT_BALANCE } from '../../utils';
+import { AccountId, MIN_ACCOUNT_BALANCE } from "../../utils";
 
-import { Event, EVENT_KEY, EventDetails } from './models';
+import { Event, EVENT_KEY, EventDetails } from "./models";
 
 /**
  * The Event contract represents a real-world or virtual event.
@@ -20,10 +20,10 @@ import { Event, EVENT_KEY, EventDetails } from './models';
  * Initializes the Event contract.
  */
 export function initialize(details: EventDetails): void {
-    assert(!is_initialized(), 'Contract is already initialized');
+    assert(!is_initialized(), "Contract is already initialized");
     assert(
         u128.ge(context.attachedDeposit, MIN_ACCOUNT_BALANCE),
-        'MIN_ACCOUNT_BALANCE must be attached to initialize (3 NEAR)'
+        "MIN_ACCOUNT_BALANCE must be attached to initialize (3 NEAR)"
     );
 
     Event.set(new Event(context.sender, details));
@@ -177,10 +177,10 @@ export function pay_hosts(): void {
 function is_initialized(): bool {
     return storage.hasKey(EVENT_KEY);
 }
-  
+
 /**
  * Guard against contract not having been initialized.
  */
 function assert_initialized(): void {
-    assert(is_initialized(), 'Contract must be initialized first.');
+    assert(is_initialized(), "Contract must be initialized first.");
 }

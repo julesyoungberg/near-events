@@ -1,7 +1,7 @@
-import { VMContext, u128 } from 'near-sdk-as';
-import * as contract from '../assembly'
-import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from '../../utils';
-import { EventDetails } from '../assembly/models';
+import { VMContext, u128 } from "near-sdk-as";
+import * as contract from "../assembly";
+import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from "../../utils";
+import { EventDetails } from "../assembly/models";
 
 // config
 const ONE_MONTH = 30 * 24 * 3600 * 1000 * 1000000; // nanoseconds
@@ -9,11 +9,11 @@ const NOW = Date.now() * 1000000; // nanoseconds
 const DATE = NOW + ONE_MONTH;
 const LOCATION = "space";
 const TITLE = "space party";
-const DESCRIPTION = 'come dance and chat with friends';
-const HOST = 'alice';
-const COHOST = 'bob';
-const GUEST = 'carol';
-const ATTENDEE = 'david';
+const DESCRIPTION = "come dance and chat with friends";
+const HOST = "alice";
+const COHOST = "bob";
+const GUEST = "carol";
+const ATTENDEE = "david";
 
 // helper functions
 const setCurrentAccount = (id: string): void => {
@@ -31,15 +31,10 @@ const attachMinBalance = (): void => {
 
 const setBlockTimestamp = (timestamp: u64): void => {
     VMContext.setBlock_timestamp(timestamp);
-}
+};
 
-const newEventDetails = (): EventDetails => new EventDetails(
-    DATE,
-    LOCATION,
-    TITLE,
-    DESCRIPTION,
-    ""
-);
+const newEventDetails = (): EventDetails =>
+    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
 
 const doInitialize = (): void => {
     setCurrentAccount(HOST);
@@ -78,7 +73,7 @@ describe("initialization", () => {
         expect(() => {
             contract.get_event();
         }).toThrow();
-    })
+    });
 
     describe("initialize()", () => {
         it("requires a min deposit", () => {
@@ -124,27 +119,15 @@ describe("initialization", () => {
             it("requires a location", () => {
                 expect(() => {
                     contract.initialize(
-                        new EventDetails(
-                            DATE,
-                            "",
-                            TITLE,
-                            DESCRIPTION,
-                            ""
-                        )
-                    )
+                        new EventDetails(DATE, "", TITLE, DESCRIPTION, "")
+                    );
                 }).toThrow();
             });
 
             it("requires a title", () => {
                 expect(() => {
                     contract.initialize(
-                        new EventDetails(
-                            DATE,
-                            LOCATION,
-                            "",
-                            DESCRIPTION,
-                            ""
-                        )
+                        new EventDetails(DATE, LOCATION, "", DESCRIPTION, "")
                     );
                 }).toThrow();
             });
@@ -152,13 +135,7 @@ describe("initialization", () => {
             it("requires a description", () => {
                 expect(() => {
                     contract.initialize(
-                        new EventDetails(
-                            DATE,
-                            LOCATION,
-                            TITLE,
-                            "",
-                            ""
-                        )
+                        new EventDetails(DATE, LOCATION, TITLE, "", "")
                     );
                 }).toThrow();
             });
@@ -793,27 +770,15 @@ describe("initialized", () => {
             it("requires a location", () => {
                 expect(() => {
                     contract.set_details(
-                        new EventDetails(
-                            DATE,
-                            "",
-                            TITLE,
-                            DESCRIPTION,
-                            ""
-                        )
-                    )
+                        new EventDetails(DATE, "", TITLE, DESCRIPTION, "")
+                    );
                 }).toThrow();
             });
 
             it("requires a title", () => {
                 expect(() => {
                     contract.set_details(
-                        new EventDetails(
-                            DATE,
-                            LOCATION,
-                            "",
-                            DESCRIPTION,
-                            ""
-                        )
+                        new EventDetails(DATE, LOCATION, "", DESCRIPTION, "")
                     );
                 }).toThrow();
             });
@@ -821,13 +786,7 @@ describe("initialized", () => {
             it("requires a description", () => {
                 expect(() => {
                     contract.set_details(
-                        new EventDetails(
-                            DATE,
-                            LOCATION,
-                            TITLE,
-                            "",
-                            ""
-                        )
+                        new EventDetails(DATE, LOCATION, TITLE, "", "")
                     );
                 }).toThrow();
             });
@@ -1081,21 +1040,21 @@ describe("initialized", () => {
                         contract.buy_ticket();
                     }).toThrow();
                 });
-    
+
                 it("throws for a guest", () => {
                     setCurrentAccount(GUEST);
                     expect(() => {
                         contract.buy_ticket();
                     }).toThrow();
                 });
-    
+
                 it("throws for a cohost", () => {
                     setCurrentAccount(COHOST);
                     expect(() => {
                         contract.buy_ticket();
                     }).toThrow();
                 });
-    
+
                 it("throws for a host", () => {
                     setCurrentAccount(HOST);
                     expect(() => {
@@ -1169,7 +1128,7 @@ describe("initialized", () => {
 
                 setCurrentAccount(HOST);
                 expect(contract.get_tickets_sold()).toBe(0);
-                
+
                 setCurrentAccount(ATTENDEE);
                 expect(contract.has_ticket(ATTENDEE)).toBe(false);
                 contract.buy_ticket();
