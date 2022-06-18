@@ -1,15 +1,12 @@
 import { VMContext, u128 } from "near-sdk-as";
-import * as contract from "../assembly";
+
+import { DATE, DESCRIPTION, LOCATION, newEventDetails, NOW, ONE_MONTH, TITLE } from "../../__mocks__/event"
+import { EventDetails } from "../../types";
 import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from "../../utils";
-import { EventDetails } from "../assembly/models";
+
+import * as contract from "../assembly";
 
 // config
-const ONE_MONTH = 30 * 24 * 3600 * 1000 * 1000000; // nanoseconds
-const NOW = Date.now() * 1000000; // nanoseconds
-const DATE = NOW + ONE_MONTH;
-const LOCATION = "space";
-const TITLE = "space party";
-const DESCRIPTION = "come dance and chat with friends";
 const HOST = "alice";
 const COHOST = "bob";
 const GUEST = "carol";
@@ -32,9 +29,6 @@ const attachMinBalance = (): void => {
 const setBlockTimestamp = (timestamp: u64): void => {
     VMContext.setBlock_timestamp(timestamp);
 };
-
-const newEventDetails = (): EventDetails =>
-    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
 
 const doInitialize = (): void => {
     setCurrentAccount(HOST);

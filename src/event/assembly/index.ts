@@ -1,8 +1,10 @@
 // @nearfile out
 import { context, storage, u128 } from "near-sdk-as";
+
+import { EventDetails } from "../../types";
 import { AccountId, MIN_ACCOUNT_BALANCE } from "../../utils";
 
-import { Event, EVENT_KEY, EventDetails } from "./models";
+import { Event, EVENT_KEY } from "./models";
 
 /**
  * The Event contract represents a real-world or virtual event.
@@ -21,9 +23,11 @@ import { Event, EVENT_KEY, EventDetails } from "./models";
  */
 export function initialize(details: EventDetails): void {
     assert(!is_initialized(), "Contract is already initialized");
+
+    // @todo improve error message
     assert(
         u128.ge(context.attachedDeposit, MIN_ACCOUNT_BALANCE),
-        "MIN_ACCOUNT_BALANCE must be attached to initialize (3 NEAR)"
+        "MIN_ACCOUNT_BALANCE must be attached to initialize"
     );
 
     Event.set(new Event(context.sender, details));
