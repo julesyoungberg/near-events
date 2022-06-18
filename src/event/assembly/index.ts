@@ -29,7 +29,9 @@ export function initialize(details: EventDetails): void {
     Event.set(new Event(context.sender, details));
 }
 
-// view methods
+/****************
+ * View Methods
+ ****************/
 
 /**
  * Fetches the event object from the contract's storage.
@@ -89,7 +91,9 @@ export function has_ticket(attendee: AccountId): boolean {
     return get_event().has_ticket(attendee);
 }
 
-// change methods
+/****************
+ * Change Methods
+ ****************/
 
 /**
  * Adds a new cohost to the event.

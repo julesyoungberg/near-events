@@ -100,6 +100,9 @@ export class Event {
         return this.tickets.size;
     }
 
+    /**
+     * Returns true if the accound ID is a host, guest, or a ticket holder.
+     */
     has_ticket(attendee: AccountId): boolean {
         if (this.is_guest(attendee)) {
             return true;
