@@ -106,6 +106,8 @@ export class Event {
         return false;
     }
 
+    // @todo implement payout
+
     // change methods
 
     save(): void {

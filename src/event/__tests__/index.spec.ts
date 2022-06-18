@@ -4,7 +4,7 @@ import { AccountId, MIN_ACCOUNT_BALANCE, ONE_NEAR, toYocto } from '../../utils';
 import { EventDetails } from '../assembly/models';
 
 // config
-const DATE = Date.now() / 1000 + 30 * 24 * 3600;
+const DATE = (Date.now() + 30 * 24 * 3600000) * 1000000;
 const LOCATION = "space";
 const TITLE = "space party";
 const DESCRIPTION = 'come dance and chat with friends';
@@ -88,7 +88,69 @@ describe("initialization", () => {
             expect(event.host).toBe(HOST);
         });
 
-        // @todo test detail validation
+        describe("detail validation", () => {
+            beforeEach(() => {
+                setCurrentAccount(HOST);
+                attachMinBalance();
+            });
+
+            // @todo fix event time
+            // it("requires an upcoming time", () => {
+            //     expect(() => {
+            //         contract.initialize(
+            //             new EventDetails(
+            //                 (Date.now() - 30 * 24 * 3600000) * 1000000,
+            //                 LOCATION,
+            //                 TITLE,
+            //                 DESCRIPTION,
+            //                 ""
+            //             )
+            //         );
+            //     }).toThrow();
+            // });
+
+            it("requires a location", () => {
+                expect(() => {
+                    contract.initialize(
+                        new EventDetails(
+                            DATE,
+                            "",
+                            TITLE,
+                            DESCRIPTION,
+                            ""
+                        )
+                    )
+                }).toThrow();
+            });
+
+            it("requires a title", () => {
+                expect(() => {
+                    contract.initialize(
+                        new EventDetails(
+                            DATE,
+                            LOCATION,
+                            "",
+                            DESCRIPTION,
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
+
+            it("requires a description", () => {
+                expect(() => {
+                    contract.initialize(
+                        new EventDetails(
+                            DATE,
+                            LOCATION,
+                            TITLE,
+                            "",
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
+        });
     });
 });
 
@@ -605,11 +667,88 @@ describe("initialized", () => {
     });
 
     describe("set_details()", () => {
-        // @todo test detail validation
+        it("updates the details", () => {
+            const new_location = "earth";
+            const new_title = "earth dance";
+            const new_description = "earth party";
+            const new_image_url = "party.jpeg";
 
-        // it("updates the details", () => {
+            contract.set_details(
+                new EventDetails(
+                    DATE,
+                    new_location,
+                    new_title,
+                    new_description,
+                    new_image_url
+                )
+            );
 
-        // });
+            const details = contract.get_details();
+
+            expect(details.location).toBe(new_location);
+            expect(details.title).toBe(new_title);
+            expect(details.description).toBe(new_description);
+            expect(details.image_url).toBe(new_image_url);
+        });
+
+        describe("detail validation", () => {
+            // @todo fix event time
+            // it("requires an upcoming time", () => {
+            //     expect(() => {
+            //         contract.initialize(
+            //             new EventDetails(
+            //                 (Date.now() - 30 * 24 * 3600000) * 1000000,
+            //                 LOCATION,
+            //                 TITLE,
+            //                 DESCRIPTION,
+            //                 ""
+            //             )
+            //         );
+            //     }).toThrow();
+            // });
+
+            it("requires a location", () => {
+                expect(() => {
+                    contract.set_details(
+                        new EventDetails(
+                            DATE,
+                            "",
+                            TITLE,
+                            DESCRIPTION,
+                            ""
+                        )
+                    )
+                }).toThrow();
+            });
+
+            it("requires a title", () => {
+                expect(() => {
+                    contract.set_details(
+                        new EventDetails(
+                            DATE,
+                            LOCATION,
+                            "",
+                            DESCRIPTION,
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
+
+            it("requires a description", () => {
+                expect(() => {
+                    contract.set_details(
+                        new EventDetails(
+                            DATE,
+                            LOCATION,
+                            TITLE,
+                            "",
+                            ""
+                        )
+                    );
+                }).toThrow();
+            });
+        });
 
         describe("cohosts and host only", () => {
             beforeEach(() => {
@@ -906,5 +1045,7 @@ describe("initialized", () => {
         });
     });
 
-    // @todo test ticket purchasing
+    describe("tickets", () => {
+        // @todo
+    });
 });
