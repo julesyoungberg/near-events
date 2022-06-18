@@ -54,11 +54,6 @@ const addGuest = (): void => {
     contract.add_guest(GUEST);
 };
 
-// @todo test cases for the assert_private guard
-// @todo test cases for the assert_public guard
-// @todo test cases for the not_guest guard
-// @todo test cases for the assert_paid guard
-
 // tests
 describe("initialization", () => {
     it("requires a min deposit", () => {
@@ -694,6 +689,28 @@ describe("initialized", () => {
                 }).not.toThrow();
             });
         });
+
+        describe("private only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+            });
+
+            it("throws for a cohost", () => {
+                setCurrentAccount(COHOST);
+                expect(() => {
+                    contract.set_ticket_price(ONE_NEAR);
+                }).toThrow();
+            });
+
+            it("throws for a host", () => {
+                setCurrentAccount(HOST);
+                expect(() => {
+                    contract.set_ticket_price(ONE_NEAR);
+                }).toThrow();
+            });
+        });
     });
 
     describe("set_max_tickets()", () => {
@@ -729,6 +746,28 @@ describe("initialized", () => {
                 expect(() => {
                     contract.set_max_tickets(100);
                 }).not.toThrow();
+            });
+        });
+
+        describe("private only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+            });
+
+            it("throws for a cohost", () => {
+                setCurrentAccount(COHOST);
+                expect(() => {
+                    contract.set_max_tickets(100);
+                }).toThrow();
+            });
+
+            it("throws for a host", () => {
+                setCurrentAccount(HOST);
+                expect(() => {
+                    contract.set_max_tickets(100);
+                }).toThrow();
             });
         });
     });
@@ -768,11 +807,104 @@ describe("initialized", () => {
                 }).not.toThrow();
             });
         });
+
+        describe("private only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+            });
+
+            it("throws for a cohost", () => {
+                setCurrentAccount(COHOST);
+                expect(() => {
+                    contract.go_public();
+                }).toThrow();
+            });
+
+            it("throws for a host", () => {
+                setCurrentAccount(HOST);
+                expect(() => {
+                    contract.go_public();
+                }).toThrow();
+            });
+        });
     });
 
-    // describe("buy_ticket()", () => {
-    // @todo test public only guard
-    // });
+    describe("buy_ticket()", () => {
+        describe("public only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+            });
+
+            describe("when private", () => {
+                it("throws for an attendee", () => {
+                    setCurrentAccount(ATTENDEE);
+                    expect(() => {
+                        contract.buy_ticket();
+                    }).toThrow();
+                });
+    
+                it("throws for a guest", () => {
+                    setCurrentAccount(GUEST);
+                    expect(() => {
+                        contract.buy_ticket();
+                    }).toThrow();
+                });
+    
+                it("throws for a cohost", () => {
+                    setCurrentAccount(COHOST);
+                    expect(() => {
+                        contract.buy_ticket();
+                    }).toThrow();
+                });
+    
+                it("throws for a host", () => {
+                    setCurrentAccount(HOST);
+                    expect(() => {
+                        contract.buy_ticket();
+                    }).toThrow();
+                });
+            });
+        });
+
+        describe("attendee only", () => {
+            beforeEach(() => {
+                addGuest();
+                addCohost();
+                contract.go_public();
+            });
+
+            it("does not throw for an attendee", () => {
+                setCurrentAccount(ATTENDEE);
+                expect(() => {
+                    contract.buy_ticket();
+                }).not.toThrow();
+            });
+
+            it("throws for a guest", () => {
+                setCurrentAccount(GUEST);
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+            });
+
+            it("throws for a cohost", () => {
+                setCurrentAccount(COHOST);
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+            });
+
+            it("throws for a host", () => {
+                setCurrentAccount(HOST);
+                expect(() => {
+                    contract.buy_ticket();
+                }).toThrow();
+            });
+        });
+    });
 
     // @todo test ticket purchasing
 });
