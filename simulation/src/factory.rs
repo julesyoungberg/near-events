@@ -1,4 +1,4 @@
-use near_sdk::near_bindgen;
+use near_sdk::{near_bindgen, PendingContractTx};
 
 use crate::{EventContract, EventDetails};
 
@@ -8,10 +8,10 @@ pub struct FactoryContract {
 }
 
 impl FactoryContract {
-    pub fn create_Event(name: String, details: EventDetails) {}
+    pub fn create_event(&self, name: String, details: EventDetails) {}
 
-    pub fn on_event_created(name: String) {}
+    pub fn on_event_created(&self, name: String) {}
 
     // pub fn get_event_names() -> [String] {}
-    pub fn get_event_names() {}
+    pub fn get_event_names(&self) {}
 }

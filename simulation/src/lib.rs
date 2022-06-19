@@ -1,4 +1,5 @@
 // based on: https://github.com/Learn-NEAR/NCD.L1.sample--nearly-neighbors/blob/main/simulation/src/lib.rs
+// and https://github.com/Learn-NEAR/NCD.L1.sample--meme-museum/blob/main/simulation/src/lib.rs
 #![allow(dead_code, unused_variables, unused_imports, non_snake_case)]
 use lazy_static::lazy_static;
 
@@ -8,6 +9,14 @@ mod factory;
 
 pub use event::*;
 pub use factory::*;
+use near_sdk_sim::UserAccount;
+
+struct TestAccounts {
+    host: UserAccount,
+    cohost: UserAccount,
+    guest: UserAccount,
+    attendee: UserAccount,
+}
 
 #[cfg(test)]
 mod test {
@@ -49,8 +58,31 @@ mod test {
         }
     }
 
+    fn create_accounts(master_account: UserAccount) -> TestAccounts {
+        TestAccounts {
+            host: master_account.create_user("alice".to_string(), to_yocto("100")),
+            cohost: master_account.create_user("bob".to_string(), to_yocto("100")),
+            guest: master_account.create_user("carol".to_string(), to_yocto("100")),
+            attendee: master_account.create_user("david".to_string(), to_yocto("100")),
+        }
+    }
+
     #[test]
     fn test_create_event() {
-        let (master_account, factory) = init();
+        let (root, factory) = init();
+
+        let accounts = create_accounts(root);
+
+        println!("creating events");
+
+        let res = call!(accounts.host, factory.get_event_names());
+
+        call!(
+            accounts.host,
+            factory.create_event("spaceparty".to_string(), new_event_details()),
+            deposit = to_yocto("1")
+        );
+
+        // root.call(factory.account_id, "create_event", args, gas, deposit)
     }
 }

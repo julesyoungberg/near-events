@@ -14,27 +14,21 @@ npm run build
 echo
 echo
 echo ---------------------------------------------------------
-echo "Step 2: Deploy the contract"
-echo
-echo "(edit scripts/1.dev-deploy.sh to deploy other contract)"
+echo "Step 2: Deploying the Factory contract"
 echo ---------------------------------------------------------
 echo
 
-# uncomment out the line below to deploy the other example contract
-# near dev-deploy ./build/debug/simple.wasm
-
-# comment the line below to deploy the other example contract
-near dev-deploy ./build/debug/singleton.wasm
+near dev-deploy ./build/debug/factory.wasm
 
 echo
 echo
 echo ---------------------------------------------------------
 echo "Step 3: Prepare your environment for next steps"
 echo
-echo "(a) find the contract (account) name in the message above"
+echo "(a) find the contract (account) names in the message above"
 echo "    it will look like this: [ Account id: dev-###-### ]"
 echo
-echo "(b) set an environment variable using this account name"
+echo "(b) set an environment variable susing this account name"
 echo "    see example below (this may not work on Windows)"
 echo
 echo ---------------------------------------------------------

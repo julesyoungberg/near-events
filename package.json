@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "watch -d -n 1 'clear && npm run test'",
         "test:unit": "npx asp -f .spec",
-        "test:simulate": "cargo test -- --nocapture",
+        "test:simulate": "npm run build && cargo test -- --nocapture",
         "test": "npm run test:unit && npm run test:simulate",
         "clean": "rm -rf ./build && rm -rf ./neardev",
         "build": "asb --target debug",
