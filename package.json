@@ -6,19 +6,24 @@
         "dev": "watch -d -n 1 'clear && npm run test'",
         "test:unit": "npx asp -f .spec",
         "test:simulate": "npm run build && cargo test -- --nocapture",
+        "test:sandbox": "ts-node ./sandbox/test.ts",
         "test": "npm run test:unit && npm run test:simulate",
         "clean": "rm -rf ./build && rm -rf ./neardev",
         "build": "asb --target debug",
         "build:release": "asb",
         "asp": "asp --verbose --nologo",
-        "prettier": "npx prettier --write ./src"
+        "prettier": "npx prettier --write **/*.ts"
     },
     "keywords": [],
     "author": "hello@near.org",
     "license": "ISC",
     "devDependencies": {
+        "bn.js": "^5.2.1",
+        "bn.js-types": "^1.0.1",
+        "near-api-js": "^0.45.1",
         "near-sdk-as": "^3.1.0",
-        "prettier": "^2.7.1"
+        "prettier": "^2.7.1",
+        "ts-node": "^10.8.1"
     },
     "dependencies": {
         "@assemblyscript/loader": "^0.20.11"
