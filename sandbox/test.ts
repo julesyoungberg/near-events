@@ -6,6 +6,7 @@ import * as nearAPI from "near-api-js";
 import { eventDetails } from "../src/__fixtures__/event";
 
 const GAS = "300000000000000";
+const ONE_NEAR = nearAPI.utils.format.parseNearAmount("1");
 
 type Config = {
     networkId: string;
@@ -74,7 +75,7 @@ let keyStore: nearAPI.keyStores.InMemoryKeyStore;
 let near: nearAPI.Near;
 
 async function initNear() {
-    console.log("initializing near");
+    console.log("Initializing near");
     config = getConfig(process.env.NEAR_ENV || "sandbox");
     const keyFile = require(config.keyPath);
     masterKey = nearAPI.utils.KeyPair.fromString(
@@ -103,9 +104,10 @@ async function createUser(accountPrefix: string) {
     );
     keyStore.setKey(config.networkId, accountId, masterKey);
     const account = new nearAPI.Account(near.connection, accountId);
-    console.log("created", accountPrefix, "account");
     console.log(
-        "balance:",
+        "Created account",
+        account.accountId,
+        "with initial balance",
         nearAPI.utils.format.formatNearAmount(
             (await account.getAccountBalance()).available
         )
@@ -127,7 +129,7 @@ function createContractUser(
 }
 
 async function deployFactory() {
-    console.log("deploying factory contract");
+    console.log("Deploying factory contract");
     const contract = await fs.readFile("./build/debug/factory.wasm");
     await masterAccount.createAndDeployContract(
         config.contractAccount,
@@ -141,7 +143,7 @@ async function test() {
     await initNear();
     await deployFactory();
 
-    console.log("creating users");
+    console.log("\nCreating users");
     const host = await createUser("alice");
     const cohost = await createUser("bob");
     const guest = await createUser("carol");
@@ -170,7 +172,7 @@ async function test() {
         },
         gas: GAS,
     });
-    eventNames = await (hostFactoryUser as any).get_event_names();
+    eventNames = await hostFactoryUser.get_event_names();
     assert.equal(eventNames.length, 1);
     assert.equal(eventNames[0], eventName);
 
@@ -192,56 +194,64 @@ async function test() {
         eventMethods
     );
 
-    console.log(" - The host can add cohosts");
+    console.log(" - The event is initialized with 0 cohosts");
     let cohosts = await hostEventUser.get_cohosts();
     assert.equal(cohosts.length, 0);
-    assert.equal(
-        await cohostEventUser({ args: { attendee: cohost.accountId } }),
-        true
-    );
+
+    console.log(" - The host can add cohosts (", cohost.accountId, ")");
+    // assert.equal(await cohostEventUser.has_ticket({ attendee: cohost.accountId }), false);
     await hostEventUser.add_cohost({ args: { cohost: cohost.accountId } });
     cohosts = await hostEventUser.get_cohosts();
     assert.equal(cohosts.length, 1);
     assert.equal(cohosts[0], cohost.accountId);
-    assert.equal(
-        await cohostEventUser.has_ticket({
-            args: { attendee: cohost.accountId },
-        }),
-        true
-    );
+    // assert.equal(await cohostEventUser.has_ticket({ attendee: cohost.accountId }), true);
 
     console.log(" - Cohosts can add guests");
-    assert.equal(
-        await guestEventUser.has_ticket({
-            args: { attendee: guest.accountId },
-        }),
-        false
-    );
+    // assert.equal(
+    //     await guestEventUser.has_ticket({
+    //         args: { attendee: guest.accountId },
+    //     }),
+    //     false
+    // );
     await cohostEventUser.add_guest({ args: { guest: guest.accountId } });
-    assert.equal(
-        await guestEventUser.has_ticket({
-            args: { attendee: guest.accountId },
-        }),
-        true
-    );
+    // assert.equal(
+    //     await guestEventUser.has_ticket({
+    //         args: { attendee: guest.accountId },
+    //     }),
+    //     true
+    // );
+
+    console.log(" - Hosts can set the ticket price");
+    await hostEventUser.set_ticket_price({ args: { price: ONE_NEAR } });
+
+    // console.log(" - Tickets are not purchaseable before the event goes public");
+    // assert.throws(async () => {
+    //     await attendeeEventUser.buy_ticket();
+    // });
+
+    console.log(" - Hosts can make the event public");
+    await hostEventUser.go_public({ args: {} });
 
     console.log(" - Attendees may purchase tickets");
-    assert.equal(
-        await attendeeEventUser.has_ticket({
-            args: { attendee: attendee.accountId },
-        }),
-        false
-    );
-    await attendeeEventUser.buy_ticket();
-    assert.equal(
-        await attendeeEventUser.has_ticket({
-            args: { attendee: attendee.accountId },
-        }),
-        true
-    );
+    // assert.equal(
+    //     await attendeeEventUser.has_ticket({
+    //         args: { attendee: attendee.accountId },
+    //     }),
+    //     false
+    // );
+    await attendeeEventUser.buy_ticket({ args: {}, amount: ONE_NEAR });
+    // assert.equal(
+    //     await attendeeEventUser.has_ticket({
+    //         args: { attendee: attendee.accountId },
+    //     }),
+    //     true
+    // );
+
+    console.log(" - Hosts can update the event date");
+    /** @todo set the date to the current timestamp or just after */
 
     console.log(" - Hosts & Cohosts are paid evenly after the event");
-    
+
     const endTimestamp = await hostFactoryUser.get_block_timestamp();
     console.log("\nEnded at block timestamp", endTimestamp);
 }

@@ -67,7 +67,7 @@ export function create_event(name: AccountId, details: EventDetails): void {
  * Callback to handle event creation result.
  */
 export function on_event_created(name: AccountId): void {
-    logging.log("Gas used: " + env.used_gas.toString());
+    logging.log("Gas used: " + env.used_gas().toString());
 
     const accountId = full_account_for(name);
     
@@ -90,7 +90,7 @@ export function on_event_created(name: AccountId): void {
             break;
     }
 
-    logging.log("Gas used: " + env.used_gas.toString());
+    logging.log("Gas used: " + env.used_gas().toString());
 }
 
 /**

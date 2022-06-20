@@ -60,32 +60,26 @@ export class Event {
     // view methods
 
     get_host(): AccountId {
-        this.assert_public_or_cohost();
         return this.host;
     }
 
     get_cohosts(): AccountId[] {
-        this.assert_public_or_cohost();
         return this.cohosts.values();
     }
 
     get_details(): EventDetails {
-        this.assert_public_or_cohost();
         return this.details;
     }
 
     get_ticket_price(): u128 {
-        this.assert_public_or_cohost();
         return this.ticket_price;
     }
 
     get_max_tickets(): i32 {
-        this.assert_public_or_cohost();
         return this.max_tickets;
     }
 
     get_tickets_sold(): i32 {
-        this.assert_cohost();
         return this.tickets.size;
     }
 
