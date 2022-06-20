@@ -21,18 +21,23 @@ function getConfig(env: string): Config {
                 networkId: "sandbox",
                 nodeUrl: "http://localhost:3030",
                 masterAccount: "test.near",
-                contractAccount: "status-message.test.near",
+                contractAccount: "events.test.near",
                 keyPath: "/tmp/near-sandbox/validator_key.json",
             };
     }
 }
 
-const factoryMethods = {
+type ContractMethods = {
+    viewMethods: string[];
+    changeMethods: string[];
+};
+
+const factoryMethods: ContractMethods = {
     viewMethods: ["get_event_names"],
     changeMethods: ["create_event"],
 };
 
-const eventMethods = {
+const eventMethods: ContractMethods = {
     viewMethods: [
         "get_event",
         "get_host",
@@ -65,6 +70,7 @@ let keyStore: nearAPI.keyStores.InMemoryKeyStore;
 let near: nearAPI.Near;
 
 async function initNear() {
+    console.log("initializing near");
     config = getConfig(process.env.NEAR_ENV || "sandbox");
     const keyFile = require(config.keyPath);
     masterKey = nearAPI.utils.KeyPair.fromString(
@@ -82,11 +88,55 @@ async function initNear() {
         headers: {},
     });
     masterAccount = new nearAPI.Account(near.connection, config.masterAccount);
-    console.log("Finish init NEAR");
+}
+
+async function createUser(accountPrefix: string) {
+    let accountId = accountPrefix + "." + config.masterAccount;
+    await masterAccount.createAccount(
+        accountId,
+        pubKey,
+        new BN(10).pow(new BN(25))
+    );
+    keyStore.setKey(config.networkId, accountId, masterKey);
+    const account = new nearAPI.Account(near.connection, accountId);
+    return account;
+}
+
+function createContractUser(
+    userAccountId: nearAPI.Account,
+    contractAccountId: string,
+    contractMethods: ContractMethods,
+) {
+    const accountUseContract = new nearAPI.Contract(
+        userAccountId,
+        contractAccountId,
+        contractMethods
+    );
+    return accountUseContract;
+}
+
+async function deployFactory() {
+    console.log("deploying factory contract");
+    const contract = await fs.readFile("./build/debug/factory.wasm");
+    await masterAccount.createAndDeployContract(
+        config.contractAccount,
+        pubKey,
+        contract,
+        new BN(10).pow(new BN(25))
+    );
 }
 
 async function test() {
-    initNear();
+    await initNear();
+    await deployFactory();
+
+    const host = await createUser("alice");
+    const hostUseFactory = createContractUser(host, config.contractAccount, factoryMethods);
+
+    console.log(" - The contract is initialized with 0 events");
+    let eventNames = await (hostUseFactory as any).get_event_names();
+    assert.equal(eventNames.length, 0);
+
 }
 
 test();
