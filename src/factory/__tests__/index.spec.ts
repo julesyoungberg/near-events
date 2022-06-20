@@ -1,7 +1,8 @@
 import { VMContext, u128 } from "near-sdk-as";
-import { MIN_ACCOUNT_BALANCE } from "../../utils";
 
-import { newEventDetails } from "../../__mocks__/event"
+import { eventDetails } from "../../__fixtures__/event"
+import { EventDetails } from "../../types";
+import { MIN_ACCOUNT_BALANCE } from "../../utils";
 
 import * as contract from "../assembly";
 
@@ -16,6 +17,10 @@ const attachDeposit = (deposit: u128): void => {
 const attachMinBalance = (): void => {
     attachDeposit(MIN_ACCOUNT_BALANCE);
 };
+
+export const newEventDetails = (): EventDetails =>
+    new EventDetails(eventDetails.date, eventDetails.location, eventDetails.title, eventDetails.description, "");
+
 
 // tests
 describe("create_event()", () => {

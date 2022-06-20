@@ -100,6 +100,10 @@ export function get_event_names(): AccountId[] {
     return events.values();
 }
 
+export function get_block_timestamp(): u64 {
+    return context.blockTimestamp;
+}
+
 /**
  * Returns a list of event info structs.
  * @todo finish or remove

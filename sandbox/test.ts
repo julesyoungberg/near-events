@@ -1,8 +1,11 @@
 import { strict as assert } from "assert";
-import { promises as fs } from "fs";
-
-import * as nearAPI from "near-api-js";
 import { BN } from "bn.js";
+import { promises as fs } from "fs";
+import * as nearAPI from "near-api-js";
+
+import { eventDetails } from "../src/__fixtures__/event";
+
+const GAS = "300000000000000";
 
 type Config = {
     networkId: string;
@@ -33,7 +36,7 @@ type ContractMethods = {
 };
 
 const factoryMethods: ContractMethods = {
-    viewMethods: ["get_event_names"],
+    viewMethods: ["get_event_names", "get_block_timestamp"],
     changeMethods: ["create_event"],
 };
 
@@ -41,6 +44,7 @@ const eventMethods: ContractMethods = {
     viewMethods: [
         "get_event",
         "get_host",
+        "get_cohosts",
         "get_details",
         "get_ticket_price",
         "get_max_tickets",
@@ -99,14 +103,21 @@ async function createUser(accountPrefix: string) {
     );
     keyStore.setKey(config.networkId, accountId, masterKey);
     const account = new nearAPI.Account(near.connection, accountId);
+    console.log("created", accountPrefix, "account");
+    console.log(
+        "balance:",
+        nearAPI.utils.format.formatNearAmount(
+            (await account.getAccountBalance()).available
+        )
+    );
     return account;
 }
 
 function createContractUser(
     userAccountId: nearAPI.Account,
     contractAccountId: string,
-    contractMethods: ContractMethods,
-) {
+    contractMethods: ContractMethods
+): any {
     const accountUseContract = new nearAPI.Contract(
         userAccountId,
         contractAccountId,
@@ -130,13 +141,109 @@ async function test() {
     await initNear();
     await deployFactory();
 
+    console.log("creating users");
     const host = await createUser("alice");
-    const hostUseFactory = createContractUser(host, config.contractAccount, factoryMethods);
+    const cohost = await createUser("bob");
+    const guest = await createUser("carol");
+    const attendee = await createUser("david");
+    const hostFactoryUser = createContractUser(
+        host,
+        config.contractAccount,
+        factoryMethods
+    );
 
+    const startTimestamp = await hostFactoryUser.get_block_timestamp();
+    console.log("\nStarting at block timestamp", startTimestamp);
+
+    console.log("\nTests:");
     console.log(" - The contract is initialized with 0 events");
-    let eventNames = await (hostUseFactory as any).get_event_names();
+    let eventNames = await hostFactoryUser.get_event_names();
     assert.equal(eventNames.length, 0);
 
+    console.log(" - Events can be created");
+    const eventName = "spaceparty";
+    await hostFactoryUser.create_event({
+        amount: nearAPI.utils.format.parseNearAmount("3"),
+        args: {
+            name: eventName,
+            details: eventDetails,
+        },
+        gas: GAS,
+    });
+    eventNames = await (hostFactoryUser as any).get_event_names();
+    assert.equal(eventNames.length, 1);
+    assert.equal(eventNames[0], eventName);
+
+    const eventAddress = eventName + "." + config.contractAccount;
+    const hostEventUser = createContractUser(host, eventAddress, eventMethods);
+    const cohostEventUser = createContractUser(
+        cohost,
+        eventAddress,
+        eventMethods
+    );
+    const guestEventUser = createContractUser(
+        guest,
+        eventAddress,
+        eventMethods
+    );
+    const attendeeEventUser = createContractUser(
+        attendee,
+        eventAddress,
+        eventMethods
+    );
+
+    console.log(" - The host can add cohosts");
+    let cohosts = await hostEventUser.get_cohosts();
+    assert.equal(cohosts.length, 0);
+    assert.equal(
+        await cohostEventUser({ args: { attendee: cohost.accountId } }),
+        true
+    );
+    await hostEventUser.add_cohost({ args: { cohost: cohost.accountId } });
+    cohosts = await hostEventUser.get_cohosts();
+    assert.equal(cohosts.length, 1);
+    assert.equal(cohosts[0], cohost.accountId);
+    assert.equal(
+        await cohostEventUser.has_ticket({
+            args: { attendee: cohost.accountId },
+        }),
+        true
+    );
+
+    console.log(" - Cohosts can add guests");
+    assert.equal(
+        await guestEventUser.has_ticket({
+            args: { attendee: guest.accountId },
+        }),
+        false
+    );
+    await cohostEventUser.add_guest({ args: { guest: guest.accountId } });
+    assert.equal(
+        await guestEventUser.has_ticket({
+            args: { attendee: guest.accountId },
+        }),
+        true
+    );
+
+    console.log(" - Attendees may purchase tickets");
+    assert.equal(
+        await attendeeEventUser.has_ticket({
+            args: { attendee: attendee.accountId },
+        }),
+        false
+    );
+    await attendeeEventUser.buy_ticket();
+    assert.equal(
+        await attendeeEventUser.has_ticket({
+            args: { attendee: attendee.accountId },
+        }),
+        true
+    );
+
+    console.log(" - Hosts & Cohosts are paid evenly after the event");
+    
+    const endTimestamp = await hostFactoryUser.get_block_timestamp();
+    console.log("\nEnded at block timestamp", endTimestamp);
 }
 
 test();

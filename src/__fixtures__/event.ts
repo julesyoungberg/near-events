@@ -7,5 +7,10 @@ export const LOCATION = "space";
 export const TITLE = "space party";
 export const DESCRIPTION = "come dance and chat with friends";
 
-export const newEventDetails = (): EventDetails =>
-    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
+export const eventDetails = {
+    date: `${DATE}`,
+    location: LOCATION,
+    title: TITLE,
+    description: DESCRIPTION,
+    image_url: "",
+};

@@ -1,6 +1,6 @@
 import { VMContext, u128 } from "near-sdk-as";
 
-import { DATE, DESCRIPTION, LOCATION, newEventDetails, NOW, ONE_MONTH, TITLE } from "../../__mocks__/event"
+import { DATE, DESCRIPTION, LOCATION, NOW, ONE_MONTH, TITLE } from "../../__mocks__/event"
 import { EventDetails } from "../../types";
 import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from "../../utils";
 
@@ -54,6 +54,10 @@ const buyTicket = (): void => {
     contract.buy_ticket();
     setCurrentAccount(HOST);
 };
+
+export const newEventDetails = (): EventDetails =>
+    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
+
 
 // tests
 describe("initialization", () => {
