@@ -183,11 +183,6 @@ async function test() {
         eventAddress,
         eventMethods
     );
-    // const guestEventUser = createContractUser(
-    //     guest,
-    //     eventAddress,
-    //     eventMethods
-    // );
     const attendeeEventUser = createContractUser(
         attendee,
         eventAddress,
@@ -199,61 +194,58 @@ async function test() {
     assert.equal(cohosts.length, 0);
 
     console.log(" - The host can add cohosts (", cohost.accountId, ")");
-    // assert.equal(await cohostEventUser.has_ticket({ attendee: cohost.accountId }), false);
+    assert.equal(
+        await cohost.viewFunction(eventAddress, "has_ticket", {
+            attendee: cohost.accountId,
+        }),
+        false
+    );
     await hostEventUser.add_cohost({ args: { cohost: cohost.accountId } });
     cohosts = await hostEventUser.get_cohosts();
     assert.equal(cohosts.length, 1);
     assert.equal(cohosts[0], cohost.accountId);
-    // assert.equal(await cohostEventUser.has_ticket({ attendee: cohost.accountId }), true);
+    assert.equal(
+        await cohost.viewFunction(eventAddress, "has_ticket", {
+            attendee: cohost.accountId,
+        }),
+        true
+    );
 
     console.log(" - Cohosts can add guests (", guest.accountId, ")");
-    // assert.equal(
-    //     await guestEventUser.has_ticket({
-    //         args: { attendee: guest.accountId },
-    //     }),
-    //     false
-    // );
+    assert.equal(
+        await guest.viewFunction(eventAddress, "has_ticket", {
+            attendee: guest.accountId,
+        }),
+        false
+    );
     await cohostEventUser.add_guest({ args: { guest: guest.accountId } });
-    // assert.equal(
-    //     await guestEventUser.has_ticket({
-    //         args: { attendee: guest.accountId },
-    //     }),
-    //     true
-    // );
+    assert.equal(
+        await guest.viewFunction(eventAddress, "has_ticket", {
+            attendee: guest.accountId,
+        }),
+        true
+    );
 
     console.log(" - Hosts can set the ticket price");
     await hostEventUser.set_ticket_price({ args: { price: ONE_NEAR } });
 
-    // console.log(" - Tickets are not purchaseable before the event goes public");
-    // assert.throws(async () => {
-    //     await attendeeEventUser.buy_ticket();
-    // });
-
     console.log(" - Hosts can make the event public");
     await hostEventUser.go_public({ args: {} });
 
-    // console.log(" - Details can be retrieved");
-    // await attendeeEventUser.get_details();
-
     console.log(" - Attendees can purchase tickets");
-    // assert.equal(
-    //     await attendeeEventUser.has_ticket({
-    //         args: { attendee: attendee.accountId },
-    //     }),
-    //     false
-    // );
+    assert.equal(
+        await attendee.viewFunction(eventAddress, "has_ticket", {
+            attendee: attendee.accountId,
+        }),
+        false
+    );
     await attendeeEventUser.buy_ticket({ amount: ONE_NEAR, args: {} });
-    // assert.equal(
-    //     await attendeeEventUser.has_ticket({
-    //         args: { attendee: attendee.accountId },
-    //     }),
-    //     true
-    // );
-
-    // console.log(" - Hosts cannot be paid before the event date");
-    // assert.throws(async () => {
-    //     await hostEventUser.pay_hosts({ args: {}, gas: GAS });
-    // });
+    assert.equal(
+        await attendee.viewFunction(eventAddress, "has_ticket", {
+            attendee: attendee.accountId,
+        }),
+        true
+    );
 
     console.log(" - Hosts can update the event date");
 
@@ -273,33 +265,54 @@ async function test() {
 
     await new Promise((r) => setTimeout(r, diff));
 
-    console.log(" - Hosts and Cohosts are paid evenly after the event");
+    console.log(" - Hosts and cohosts are paid evenly after the event");
     const hostBalanceBefore = getBalanceInNear(await host.getAccountBalance());
-    const cohostBalanceBefore = getBalanceInNear(await cohost.getAccountBalance());
-    const guestBalanceBefore = getBalanceInNear(await guest.getAccountBalance());
-    const attendeeBalanceBefore = getBalanceInNear(await attendee.getAccountBalance());
+    const cohostBalanceBefore = getBalanceInNear(
+        await cohost.getAccountBalance()
+    );
+    const guestBalanceBefore = getBalanceInNear(
+        await guest.getAccountBalance()
+    );
+    const attendeeBalanceBefore = getBalanceInNear(
+        await attendee.getAccountBalance()
+    );
 
     await hostEventUser.pay_hosts({ args: {}, gas: GAS });
 
     const hostBalanceAfter = getBalanceInNear(await host.getAccountBalance());
-    const cohostBalanceAfter = getBalanceInNear(await cohost.getAccountBalance());
+    const cohostBalanceAfter = getBalanceInNear(
+        await cohost.getAccountBalance()
+    );
     const guestBalanceAfter = getBalanceInNear(await guest.getAccountBalance());
-    const attendeeBalanceAfter = getBalanceInNear(await attendee.getAccountBalance());
+    const attendeeBalanceAfter = getBalanceInNear(
+        await attendee.getAccountBalance()
+    );
 
     const hostBalanceDiff = hostBalanceAfter - hostBalanceBefore;
     const cohostBalanceDiff = cohostBalanceAfter - cohostBalanceBefore;
     const guestBalanceDiff = guestBalanceAfter - guestBalanceBefore;
     const attendeeBalanceDiff = attendeeBalanceAfter - attendeeBalanceBefore;
 
-    assert.equal(Math.round(hostBalanceDiff * 10), 5, "Host balance should have increased");
-    assert.equal(Math.round(cohostBalanceDiff * 10), 5, "Cohost balance should have increased");
-    assert.equal(Math.round(guestBalanceDiff * 10), 0, "Guest balance should not have changed");
-    assert.equal(Math.round(attendeeBalanceDiff * 10), 0, "Attendee balance should not have changed");
-
-    console.log(" - Hosts cannot be paid twice");
-    assert.throws(async () => {
-        await hostEventUser.pay_hosts({ args: {}, gas: GAS });
-    });
+    assert.equal(
+        Math.round(hostBalanceDiff * 10),
+        5,
+        "Host balance should have increased"
+    );
+    assert.equal(
+        Math.round(cohostBalanceDiff * 10),
+        5,
+        "Cohost balance should have increased"
+    );
+    assert.equal(
+        Math.round(guestBalanceDiff * 10),
+        0,
+        "Guest balance should not have changed"
+    );
+    assert.equal(
+        Math.round(attendeeBalanceDiff * 10),
+        0,
+        "Attendee balance should not have changed"
+    );
 }
 
 test();
