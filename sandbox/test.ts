@@ -37,7 +37,7 @@ type ContractMethods = {
 };
 
 const factoryMethods: ContractMethods = {
-    viewMethods: ["get_event_names", "get_block_timestamp"],
+    viewMethods: ["get_event_names"],
     changeMethods: ["create_event"],
 };
 
@@ -95,6 +95,10 @@ async function initNear() {
     masterAccount = new nearAPI.Account(near.connection, config.masterAccount);
 }
 
+function getBalanceInNear({ available }: { available: string }) {
+    return parseFloat(nearAPI.utils.format.formatNearAmount(available));
+}
+
 async function createUser(accountPrefix: string) {
     let accountId = accountPrefix + "." + config.masterAccount;
     await masterAccount.createAccount(
@@ -107,10 +111,9 @@ async function createUser(accountPrefix: string) {
     console.log(
         "Created account",
         account.accountId,
-        "with initial balance",
-        nearAPI.utils.format.formatNearAmount(
-            (await account.getAccountBalance()).available
-        )
+        "\n - with initial balance",
+        getBalanceInNear(await account.getAccountBalance()),
+        "NEAR"
     );
     return account;
 }
@@ -154,9 +157,6 @@ async function test() {
         factoryMethods
     );
 
-    const startTimestamp = await hostFactoryUser.get_block_timestamp();
-    console.log("\nStarting at block timestamp", startTimestamp);
-
     console.log("\nTests:");
     console.log(" - The contract is initialized with 0 events");
     let eventNames = await hostFactoryUser.get_event_names();
@@ -183,11 +183,11 @@ async function test() {
         eventAddress,
         eventMethods
     );
-    const guestEventUser = createContractUser(
-        guest,
-        eventAddress,
-        eventMethods
-    );
+    // const guestEventUser = createContractUser(
+    //     guest,
+    //     eventAddress,
+    //     eventMethods
+    // );
     const attendeeEventUser = createContractUser(
         attendee,
         eventAddress,
@@ -206,7 +206,7 @@ async function test() {
     assert.equal(cohosts[0], cohost.accountId);
     // assert.equal(await cohostEventUser.has_ticket({ attendee: cohost.accountId }), true);
 
-    console.log(" - Cohosts can add guests");
+    console.log(" - Cohosts can add guests (", guest.accountId, ")");
     // assert.equal(
     //     await guestEventUser.has_ticket({
     //         args: { attendee: guest.accountId },
@@ -232,14 +232,17 @@ async function test() {
     console.log(" - Hosts can make the event public");
     await hostEventUser.go_public({ args: {} });
 
-    console.log(" - Attendees may purchase tickets");
+    // console.log(" - Details can be retrieved");
+    // await attendeeEventUser.get_details();
+
+    console.log(" - Attendees can purchase tickets");
     // assert.equal(
     //     await attendeeEventUser.has_ticket({
     //         args: { attendee: attendee.accountId },
     //     }),
     //     false
     // );
-    await attendeeEventUser.buy_ticket({ args: {}, amount: ONE_NEAR });
+    await attendeeEventUser.buy_ticket({ amount: ONE_NEAR, args: {} });
     // assert.equal(
     //     await attendeeEventUser.has_ticket({
     //         args: { attendee: attendee.accountId },
@@ -247,13 +250,56 @@ async function test() {
     //     true
     // );
 
+    // console.log(" - Hosts cannot be paid before the event date");
+    // assert.throws(async () => {
+    //     await hostEventUser.pay_hosts({ args: {}, gas: GAS });
+    // });
+
     console.log(" - Hosts can update the event date");
-    /** @todo set the date to the current timestamp or just after */
 
-    console.log(" - Hosts & Cohosts are paid evenly after the event");
+    const currDate = new Date().getTime();
+    const diff = 10000;
+    const newDate = (currDate + diff) * 1000000;
 
-    const endTimestamp = await hostFactoryUser.get_block_timestamp();
-    console.log("\nEnded at block timestamp", endTimestamp);
+    console.log("    - setting date to", diff / 1000, "seconds from now");
+    await hostEventUser.set_details({
+        args: {
+            details: {
+                ...eventDetails,
+                date: `${newDate}`,
+            },
+        },
+    });
+
+    await new Promise((r) => setTimeout(r, diff));
+
+    console.log(" - Hosts and Cohosts are paid evenly after the event");
+    const hostBalanceBefore = getBalanceInNear(await host.getAccountBalance());
+    const cohostBalanceBefore = getBalanceInNear(await cohost.getAccountBalance());
+    const guestBalanceBefore = getBalanceInNear(await guest.getAccountBalance());
+    const attendeeBalanceBefore = getBalanceInNear(await attendee.getAccountBalance());
+
+    await hostEventUser.pay_hosts({ args: {}, gas: GAS });
+
+    const hostBalanceAfter = getBalanceInNear(await host.getAccountBalance());
+    const cohostBalanceAfter = getBalanceInNear(await cohost.getAccountBalance());
+    const guestBalanceAfter = getBalanceInNear(await guest.getAccountBalance());
+    const attendeeBalanceAfter = getBalanceInNear(await attendee.getAccountBalance());
+
+    const hostBalanceDiff = hostBalanceAfter - hostBalanceBefore;
+    const cohostBalanceDiff = cohostBalanceAfter - cohostBalanceBefore;
+    const guestBalanceDiff = guestBalanceAfter - guestBalanceBefore;
+    const attendeeBalanceDiff = attendeeBalanceAfter - attendeeBalanceBefore;
+
+    assert.equal(Math.round(hostBalanceDiff * 10), 5, "Host balance should have increased");
+    assert.equal(Math.round(cohostBalanceDiff * 10), 5, "Cohost balance should have increased");
+    assert.equal(Math.round(guestBalanceDiff * 10), 0, "Guest balance should not have changed");
+    assert.equal(Math.round(attendeeBalanceDiff * 10), 0, "Attendee balance should not have changed");
+
+    console.log(" - Hosts cannot be paid twice");
+    assert.throws(async () => {
+        await hostEventUser.pay_hosts({ args: {}, gas: GAS });
+    });
 }
 
 test();

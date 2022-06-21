@@ -225,7 +225,8 @@ export class Event {
             to_cohost.transfer(pay_amount);
         }
 
-        this.paid_out = false;
+        this.paid_out = true;
+        this.save();
     }
 
     // private methods
