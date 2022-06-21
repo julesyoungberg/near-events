@@ -1,6 +1,6 @@
 import { VMContext, u128 } from "near-sdk-as";
 
-import { eventDetails } from "../../__fixtures__/event"
+import { DATE, LOCATION, TITLE, DESCRIPTION } from "../../__fixtures__/event"
 import { EventDetails } from "../../types";
 import { MIN_ACCOUNT_BALANCE } from "../../utils";
 
@@ -19,7 +19,7 @@ const attachMinBalance = (): void => {
 };
 
 export const newEventDetails = (): EventDetails =>
-    new EventDetails(eventDetails.date, eventDetails.location, eventDetails.title, eventDetails.description, "");
+    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
 
 
 // tests

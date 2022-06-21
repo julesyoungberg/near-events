@@ -1,6 +1,6 @@
 import { VMContext, u128 } from "near-sdk-as";
 
-import { DATE, DESCRIPTION, LOCATION, NOW, ONE_MONTH, TITLE } from "../../__mocks__/event"
+import { DATE, DESCRIPTION, LOCATION, NOW, ONE_MONTH, TITLE } from "../../__fixtures__/event"
 import { EventDetails } from "../../types";
 import { MIN_ACCOUNT_BALANCE, ONE_NEAR } from "../../utils";
 
@@ -30,6 +30,9 @@ const setBlockTimestamp = (timestamp: u64): void => {
     VMContext.setBlock_timestamp(timestamp);
 };
 
+export const newEventDetails = (): EventDetails =>
+    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
+
 const doInitialize = (): void => {
     setCurrentAccount(HOST);
     attachMinBalance();
@@ -54,9 +57,6 @@ const buyTicket = (): void => {
     contract.buy_ticket();
     setCurrentAccount(HOST);
 };
-
-export const newEventDetails = (): EventDetails =>
-    new EventDetails(DATE, LOCATION, TITLE, DESCRIPTION, "");
 
 
 // tests
@@ -151,63 +151,6 @@ describe("initialized", () => {
             setCurrentAccount(ATTENDEE);
             expect(contract.get_host()).toBe(HOST);
         });
-
-        describe("must be at least cohost if private", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                it("throws for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_host();
-                    }).toThrow();
-                });
-
-                it("throws for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_host();
-                    }).toThrow();
-                });
-
-                it("does not throw for a cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.get_host();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.get_host();
-                    }).not.toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_host();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_host();
-                    }).not.toThrow();
-                });
-            });
-        });
     });
 
     describe("get_cohosts()", () => {
@@ -215,63 +158,6 @@ describe("initialized", () => {
             expect(contract.get_cohosts().length).toBe(0);
             addCohost();
             expect(contract.get_cohosts()[0]).toBe(COHOST);
-        });
-
-        describe("must be at least cohost if private", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                it("throws for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).toThrow();
-                });
-
-                it("throws for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).toThrow();
-                });
-
-                it("does not throw for a cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).not.toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_cohosts();
-                    }).not.toThrow();
-                });
-            });
         });
     });
 
@@ -284,219 +170,23 @@ describe("initialized", () => {
             expect(details.description).toBe(DESCRIPTION);
             expect(details.image_url).toBe("");
         });
-
-        describe("must be at least cohost if private", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                // @todo fix these tests
-                // it("throws for an attendee", () => {
-                //     setCurrentAccount(ATTENDEE);
-                //     expect(() => {
-                //         contract.get_details();
-                //     }).toThrow();
-                // });
-
-                // it("throws for a guest", () => {
-                //     setCurrentAccount(GUEST);
-                //     expect(() => {
-                //         contract.get_details();
-                //     }).toThrow();
-                // });
-
-                it("does not throw for a cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.get_details();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.get_details();
-                    }).not.toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_details();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_details();
-                    }).not.toThrow();
-                });
-            });
-        });
     });
 
     describe("get_ticket_price()", () => {
-        describe("must be at least cohost if private", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                it("throws for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).toThrow();
-                });
-
-                it("throws for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).toThrow();
-                });
-
-                it("does not throw for a cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).not.toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_ticket_price();
-                    }).not.toThrow();
-                });
-            });
+        it("defaults to 0", () => {
+            expect(contract.get_ticket_price()).toBe(new u128(0));
         });
     });
 
     describe("get_max_tickets()", () => {
-        describe("must be at least cohost if private", () => {
-            beforeEach(() => {
-                addCohost();
-                addGuest();
-            });
-
-            describe("when private", () => {
-                it("throws for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).toThrow();
-                });
-
-                it("throws for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).toThrow();
-                });
-
-                it("does not throw for a cohost", () => {
-                    setCurrentAccount(COHOST);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for a host", () => {
-                    setCurrentAccount(HOST);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).not.toThrow();
-                });
-            });
-
-            describe("when public", () => {
-                beforeEach(() => {
-                    contract.go_public();
-                });
-
-                it("does not throw for a guest", () => {
-                    setCurrentAccount(GUEST);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).not.toThrow();
-                });
-
-                it("does not throw for an attendee", () => {
-                    setCurrentAccount(ATTENDEE);
-                    expect(() => {
-                        contract.get_max_tickets();
-                    }).not.toThrow();
-                });
-            });
+        it("defaults to 0", () => {
+            expect(contract.get_max_tickets()).toBe(0);
         });
     });
 
     describe("get_tickets_sold()", () => {
-        describe("cohosts and host only", () => {
-            beforeEach(() => {
-                addGuest();
-                addCohost();
-                contract.go_public();
-            });
-
-            it("throws for an attendee", () => {
-                setCurrentAccount(ATTENDEE);
-                expect(() => {
-                    contract.get_tickets_sold();
-                }).toThrow();
-            });
-
-            it("throws for a guest", () => {
-                setCurrentAccount(GUEST);
-                expect(() => {
-                    contract.get_tickets_sold();
-                }).toThrow();
-            });
-
-            it("does not throw for an cohost", () => {
-                setCurrentAccount(COHOST);
-                expect(() => {
-                    contract.get_tickets_sold();
-                }).not.toThrow();
-            });
-
-            it("does not throw for a host", () => {
-                setCurrentAccount(HOST);
-                expect(() => {
-                    contract.get_tickets_sold();
-                }).not.toThrow();
-            });
+        it("defaults to 0", () => {
+            expect(contract.get_tickets_sold()).toBe(0);
         });
     });
 

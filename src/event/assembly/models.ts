@@ -285,10 +285,4 @@ export class Event {
             "You must pay the ticket price"
         );
     }
-
-    private assert_public_or_cohost(): void {
-        if (!this.public) {
-            this.assert_cohost();
-        }
-    }
 }

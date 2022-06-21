@@ -3,10 +3,18 @@ import { BN } from "bn.js";
 import { promises as fs } from "fs";
 import * as nearAPI from "near-api-js";
 
-import { eventDetails } from "../src/__fixtures__/event";
+import { DATE, LOCATION, TITLE, DESCRIPTION } from "../src/__fixtures__/event";
 
 const GAS = "300000000000000";
 const ONE_NEAR = nearAPI.utils.format.parseNearAmount("1");
+
+export const eventDetails = {
+    date: `${DATE}`,
+    location: LOCATION,
+    title: TITLE,
+    description: DESCRIPTION,
+    image_url: "",
+};
 
 type Config = {
     networkId: string;
