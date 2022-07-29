@@ -17,30 +17,28 @@ function App() {
             setBalance(await accountBalance());
         }
     }, [account]);
-    
+
     useEffect(() => {
         getBalance();
     }, [getBalance]);
 
+    if (!account.accountId) {
+        return <Cover name="Street Food" login={login} coverImg={coverImg} />;
+    }
+
     return (
-        <>
-            {account.accountId ? (
-                <Container fluid="md">
-                    <Nav className="justify-content-end pt-3 pb-5">
-                        <Nav.Item>
-                            <Wallet
-                                address={account.accountId}
-                                amount={balance}
-                                symbol="NEAR"
-                                destroy={destroy}
-                            />
-                        </Nav.Item>
-                    </Nav>
-                </Container>
-            ) : (
-                <Cover name="Street Food" login={login} coverImg={coverImg} />
-            )}
-        </>
+        <Container fluid="md">
+            <Nav className="justify-content-end pt-3 pb-5">
+                <Nav.Item>
+                    <Wallet
+                        address={account.accountId}
+                        amount={balance}
+                        symbol="NEAR"
+                        destroy={destroy}
+                    />
+                </Nav.Item>
+            </Nav>
+        </Container>
     );
 }
 
