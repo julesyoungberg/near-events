@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import React from "react";
 import ReactDOM from "react-dom/client";
 
@@ -9,6 +10,8 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { initializeContract } from "./utils/near";
+
+window.Buffer = Buffer;
 
 window.nearInitPromise = initializeContract()
     .then(() => {
