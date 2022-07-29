@@ -1,9 +1,9 @@
 export type EventDetails = {
-    date: string,
-    location: string,
-    title: string,
-    description: string,
-    image_url: string
+    date: string;
+    location: string;
+    title: string;
+    description: string;
+    image_url: string;
 };
 
 export class EventContract {

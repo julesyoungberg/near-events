@@ -26,7 +26,11 @@ export default function Wallet({ address, amount, symbol, destroy }: Props) {
                             {amount} <span className="ms-1">{symbol}</span>
                         </>
                     ) : (
-                        <Spinner animation="border" size="sm" className="opacity-25" />
+                        <Spinner
+                            animation="border"
+                            size="sm"
+                            className="opacity-25"
+                        />
                     )}
                 </Dropdown.Toggle>
 

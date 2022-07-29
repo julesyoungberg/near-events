@@ -7,6 +7,7 @@ import Wallet from "./components/Wallet";
 import Cover from "./components/utils/Cover";
 import coverImg from "./assets/img/sandwich.jpg";
 import "./App.css";
+import { Events } from "./components/Events";
 
 function App() {
     const account = window.walletConnection.account();
@@ -38,6 +39,7 @@ function App() {
                     />
                 </Nav.Item>
             </Nav>
+            <Events />
         </Container>
     );
 }
