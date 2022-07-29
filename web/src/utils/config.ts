@@ -1,4 +1,4 @@
-const { CONTRACT_NAME = "marketplace.julesyoungberg.testnet" } = process.env;
+export const { CONTRACT_NAME = "events.jyoungberg.testnet" } = process.env;
 
 export default function environment(env: string) {
     switch (env) {

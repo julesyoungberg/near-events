@@ -4,7 +4,5 @@ type Props = {
 
 export default function Event({ event }: Props) {
     console.log("Event", { event });
-    return (
-        <></>
-    );
+    return <></>;
 }

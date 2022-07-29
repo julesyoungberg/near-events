@@ -24,7 +24,7 @@ function App() {
     }, [getBalance]);
 
     if (!account.accountId) {
-        return <Cover name="Street Food" login={login} coverImg={coverImg} />;
+        return <Cover name="Events" login={login} coverImg={coverImg} />;
     }
 
     return (

@@ -14,7 +14,7 @@ import { initializeContract } from "./utils/near";
 
 window.Buffer = Buffer;
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 window.nearInitPromise = initializeContract().then(() => {
     const root = ReactDOM.createRoot(
