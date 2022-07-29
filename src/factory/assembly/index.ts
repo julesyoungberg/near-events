@@ -124,6 +124,6 @@ export function get_event_names(): AccountId[] {
  * =================================
  */
 
-function full_account_for(dataset: string): string {
-    return dataset + "." + context.contractName;
+function full_account_for(event: string): string {
+    return event + "." + context.contractName;
 }
