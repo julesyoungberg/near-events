@@ -1,65 +1,11 @@
-# `near-sdk-as` Starter Kit
+# `near-events`
 
-This is a good project to use as a starting point for your AssemblyScript project.
+This is a sample event ticketing application on the near blockchain.
 
-## Samples
+## Contracts
 
-This repository includes a complete project structure for AssemblyScript contracts targeting the NEAR platform.
+This repository includes 2 simple style contracts that make up the application. The event contract represents a single event. It stores information about the host, guests, and tickets. The factory contract is the main contract which clients / users can use to create and find events.
 
-The example here is very basic. It's a simple contract demonstrating the following concepts:
-
-- a single contract
-- the difference between `view` vs. `change` methods
-- basic contract storage
-
-There are 2 AssemblyScript contracts in this project, each in their own folder:
-
-- **simple** in the `src/simple` folder
-- **singleton** in the `src/singleton` folder
-
-### Simple
-
-We say that an AssemblyScript contract is written in the "simple style" when the `index.ts` file (the contract entry point) includes a series of exported functions.
-
-In this case, all exported functions become public contract methods.
-
-```ts
-// return the string 'hello world'
-export function helloWorld(): string {}
-
-// read the given key from account (contract) storage
-export function read(key: string): string {}
-
-// write the given value at the given key to account (contract) storage
-export function write(key: string, value: string): string {}
-
-// private helper method used by read() and write() above
-private storageReport(): string {}
-```
-
-### Singleton
-
-We say that an AssemblyScript contract is written in the "singleton style" when the `index.ts` file (the contract entry point) has a single exported class (the name of the class doesn't matter) that is decorated with `@nearBindgen`.
-
-In this case, all methods on the class become public contract methods unless marked `private`. Also, all instance variables are stored as a serialized instance of the class under a special storage key named `STATE`. AssemblyScript uses JSON for storage serialization (as opposed to Rust contracts which use a custom binary serialization format called borsh).
-
-```ts
-@nearBindgen
-export class Contract {
-  // return the string 'hello world'
-  helloWorld(): string {}
-
-  // read the given key from account (contract) storage
-  read(key: string): string {}
-
-  // write the given value at the given key to account (contract) storage
-  @mutateState()
-  write(key: string, value: string): string {}
-
-  // private helper method used by read() and write() above
-  private storageReport(): string {}
-}
-```
 
 ## Usage
 
@@ -155,15 +101,4 @@ export BENEFICIARY=<your-account-here>   # this account receives contract accoun
 │   ├── tsconfig.json                  # Typescript configuration
 │   └── utils.ts                       # common contract utility functions
 └── package-lock.json                  # project manifest version lock
-```
-
-You may clone this repo to get started OR create everything from scratch.
-
-Please note that, in order to create the AssemblyScript and tests folder structure, you may use the command `asp --init` which will create the following folders and files:
-
-```
-./assembly/
-./assembly/tests/
-./assembly/tests/example.spec.ts
-./assembly/tests/as-pect.d.ts
 ```
